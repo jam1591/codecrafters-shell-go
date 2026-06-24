@@ -53,6 +53,13 @@ func parseTokens(rawCmd string) []string {
 
 	for curr < len(rawCmd) {
 		switch rawCmd[curr] {
+		case '"':
+			curr += 1
+			temp := curr
+			for ; curr < len(rawCmd) && rawCmd[curr] != '"'; curr += 1 {
+			}
+			currToken += rawCmd[temp:curr]
+			curr += 1
 		case '\'':
 			curr += 1
 			temp := curr
