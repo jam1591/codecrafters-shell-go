@@ -60,7 +60,7 @@ func parseTokens(rawCmd string) []string {
 		case '"':
 			curr += 1
 			for ; curr < len(rawCmd) && rawCmd[curr] != '"'; curr += 1 {
-				if rawCmd[curr] == '\\' {
+				if rawCmd[curr]+rawCmd[curr+1] == '\\' {
 					curr += 1
 					currToken += rawCmd[curr : curr+1]
 				}
