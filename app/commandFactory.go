@@ -64,7 +64,7 @@ func parseTokens(rawCmd string) []string {
 					switch rawCmd[curr+1] {
 					case '\\', '"':
 						curr += 1
-						currToken = string(rawCmd[curr])
+						currToken += string(rawCmd[curr])
 						curr += 1
 						continue
 					}
