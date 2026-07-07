@@ -63,6 +63,11 @@ func parseTokens(rawCmd string) []string {
 			continue
 		}
 
+		if inDoubleQuote && !escaping {
+			currToken.WriteByte(byte(ch))
+			continue
+		}
+
 		if escaping {
 			currToken.WriteByte(byte(ch))
 			escaping = false
@@ -77,10 +82,6 @@ func parseTokens(rawCmd string) []string {
 		case '\'':
 			inSingleQuote = true
 		case ' ':
-			if inDoubleQuote {
-				currToken.WriteByte(byte(ch))
-				continue
-			}
 			if currToken.Len() > 0 {
 				tokens = append(tokens, currToken.String())
 				currToken.Reset()
