@@ -12,7 +12,7 @@ const (
 	changeDirectoryCommandName       = "cd"
 )
 
-const builtIns = "echo, exit, type, pwd, cd"
+const builtIns = "echo, exit, type, pwd, cd, cat"
 
 type CommandFactory struct {
 }
