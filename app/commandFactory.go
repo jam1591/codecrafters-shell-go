@@ -12,7 +12,7 @@ const (
 	changeDirectoryCommandName       = "cd"
 )
 
-const builtIns = "echo, exit, type, pwd, cd, cat"
+const builtIns = "echo, exit, type, pwd, cd"
 
 type CommandFactory struct {
 }
@@ -62,7 +62,7 @@ func parseTokens(rawCmd string) []string {
 			for curr < len(rawCmd) && rawCmd[curr] != '"' {
 				if rawCmd[curr] == '\\' && curr+1 < len(rawCmd) {
 					switch rawCmd[curr+1] {
-					case '\\', '"':
+					case '\\':
 						curr += 1
 						currToken += string(rawCmd[curr])
 						curr += 1
