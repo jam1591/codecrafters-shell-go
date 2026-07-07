@@ -63,32 +63,36 @@ func parseTokens(rawCmd string) []string {
 			continue
 		}
 
-		if inDoubleQuote && !escaping {
-			currToken.WriteByte(byte(ch))
-			continue
-		}
-
 		if escaping {
 			currToken.WriteByte(byte(ch))
 			escaping = false
 			continue
 		}
 
-		switch ch {
-		case '\\':
+		if ch == '\\' {
 			escaping = true
-		case '"':
+			continue
+		}
+
+		if ch == '"' && !inSingleQuote {
 			inDoubleQuote = !inDoubleQuote
-		case '\'':
+			continue
+		}
+
+		if ch == '\'' && !inDoubleQuote {
 			inSingleQuote = true
-		case ' ':
+			continue
+		}
+
+		if ch == ' ' && !inDoubleQuote {
 			if currToken.Len() > 0 {
 				tokens = append(tokens, currToken.String())
 				currToken.Reset()
 			}
-		default:
-			currToken.WriteByte(byte(ch))
+			continue
 		}
+
+		currToken.WriteByte(byte(ch))
 	}
 
 	if currToken.Len() > 0 {
