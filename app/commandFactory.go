@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -61,8 +60,6 @@ func parseTokens(rawCmd string) []string {
 		case '"':
 			curr += 1
 			for curr < len(rawCmd) && rawCmd[curr] != '"' {
-				currentRune := rawCmd[curr]
-				fmt.Printf("%c\n", currentRune)
 				if rawCmd[curr] == '\\' && curr+1 < len(rawCmd) {
 					switch rawCmd[curr+1] {
 					case '\\', '"':
