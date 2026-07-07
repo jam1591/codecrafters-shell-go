@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -40,10 +41,17 @@ func (c *ExternalCommand) Execute() {
 
 	err := cmd.Run()
 
-	if err != nil {
-		fmt.Printf("%s: command not found\n", c.command)
+	if err == nil {
 		return
 	}
+
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return
+	}
+
+	fmt.Printf("%s: command not found\n", c.command)
+	return
 }
 
 type PrintCurrentDirectoryCommand struct {

@@ -47,53 +47,51 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 }
 
 func parseTokens(rawCmd string) []string {
-	var curr int
 	var tokens []string
-	var currToken string
+	var currToken strings.Builder
+	inSingleQuote := false
+	inDoubleQuote := false
+	escaping := false
 
-	for curr < len(rawCmd) {
-		switch rawCmd[curr] {
+	for _, ch := range rawCmd {
+		if inSingleQuote {
+			if ch == '\'' {
+				inSingleQuote = false
+				continue
+			}
+			currToken.WriteByte(byte(ch))
+			continue
+		}
+
+		if escaping {
+			currToken.WriteByte(byte(ch))
+			escaping = false
+			continue
+		}
+
+		switch ch {
 		case '\\':
-			curr += 1
-			currToken = currToken + rawCmd[curr:curr+1]
-			curr += 1
+			escaping = true
 		case '"':
-			curr += 1
-			for curr < len(rawCmd) && rawCmd[curr] != '"' {
-				if rawCmd[curr] == '\\' && curr+1 < len(rawCmd) {
-					switch rawCmd[curr+1] {
-					case '\\', '"':
-						curr += 1
-						currToken += string(rawCmd[curr])
-						curr += 1
-						continue
-					}
-				}
-
-				currToken += string(rawCmd[curr])
-				curr += 1
-			}
+			inDoubleQuote = !inDoubleQuote
 		case '\'':
-			curr += 1
-			temp := curr
-			for ; curr < len(rawCmd) && rawCmd[curr] != '\''; curr += 1 {
-			}
-			currToken += rawCmd[temp:curr]
-			curr += 1
+			inSingleQuote = true
 		case ' ':
-			if currToken != "" {
-				tokens = append(tokens, currToken)
+			if inDoubleQuote {
+				currToken.WriteByte(byte(ch))
+				continue
 			}
-			currToken = ""
-			curr += 1
+			if currToken.Len() > 0 {
+				tokens = append(tokens, currToken.String())
+				currToken.Reset()
+			}
 		default:
-			currToken += string(rawCmd[curr])
-			curr += 1
+			currToken.WriteByte(byte(ch))
 		}
 	}
 
-	if currToken != "" {
-		tokens = append(tokens, currToken)
+	if currToken.Len() > 0 {
+		tokens = append(tokens, currToken.String())
 	}
 
 	return tokens
