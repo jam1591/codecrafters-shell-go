@@ -23,13 +23,16 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 	redirectIndex := len(args)
 	redirectStderrIndex := len(args)
 	for i, arg := range args {
-		if arg == ">" || arg == "1>" {
+		if arg == "1>" {
 			redirectIndex = i
 			break
 		} else if arg == "2>" {
 			redirectStderrIndex = i
 			break
+		} else if arg == ">" || arg == "1>" {
+			redirectIndex = i
 		}
+
 	}
 
 	var executor Executor
