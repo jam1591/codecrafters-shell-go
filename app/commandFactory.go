@@ -22,7 +22,7 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 
 	redirectIndex := len(args)
 	for i, arg := range args {
-		if arg == ">" {
+		if arg == ">" || arg == "1>" {
 			redirectIndex = i
 			break
 		}
