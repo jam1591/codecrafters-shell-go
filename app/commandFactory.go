@@ -23,24 +23,21 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 	redirectIndex := len(args)
 	redirectStderrIndex := len(args)
 	for i, arg := range args {
-		if arg == "1>" {
+		switch arg {
+		case ">", "1>":
 			redirectIndex = i
-			break
-		} else if arg == "2>" {
+		case "2>":
 			redirectStderrIndex = i
-			break
-		} else if arg == ">" {
-			redirectIndex = i
-			break
 		}
-
 	}
+
+	commandEndIndex := min(redirectIndex, redirectStderrIndex)
 
 	var executor Executor
 	switch args[0] {
 	case echoCommandName:
 		executor = &EchoCommand{
-			message: strings.Join(args[1:redirectIndex], " "),
+			message: strings.Join(args[1:commandEndIndex], " "),
 		}
 	case exitCommandName:
 		executor = &ExitCommand{}
@@ -58,26 +55,26 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 	default:
 		executor = &ExternalCommand{
 			command: args[0],
-			argv:    args[1:redirectIndex],
+			argv:    args[1:commandEndIndex],
 		}
 	}
 
-	if redirectIndex == len(args) {
-		return &NoRedirect{
+	if redirectIndex < len(args) {
+		return &RedirectStdout{
 			executor: executor,
+			filePath: args[redirectIndex+1],
 		}
 	}
 
-	if redirectStderrIndex < redirectIndex {
+	if redirectStderrIndex < len(args) {
 		return &RedirectStderr{
 			executor: executor,
 			filePath: args[redirectStderrIndex+1],
 		}
 	}
 
-	return &RedirectStdout{
+	return &NoRedirect{
 		executor: executor,
-		filePath: args[redirectIndex+1],
 	}
 }
 
