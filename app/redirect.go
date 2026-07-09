@@ -14,6 +14,11 @@ func (c *Redirect) Execute() {
 	}
 	defer file.Close()
 
+	temp := os.Stdout
+	defer func() {
+		os.Stdout = temp
+	}()
+
 	os.Stdout = file
 	c.executor.Execute()
 }
