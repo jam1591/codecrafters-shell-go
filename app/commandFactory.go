@@ -29,8 +29,9 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 		} else if arg == "2>" {
 			redirectStderrIndex = i
 			break
-		} else if arg == ">" || arg == "1>" {
+		} else if arg == ">" {
 			redirectIndex = i
+			break
 		}
 
 	}
