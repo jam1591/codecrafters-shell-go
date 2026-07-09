@@ -2,12 +2,12 @@ package main
 
 import "os"
 
-type Redirect struct {
+type RedirectStdout struct {
 	executor Executor
 	filePath string
 }
 
-func (c *Redirect) Execute() {
+func (c *RedirectStdout) Execute() {
 	file, err := os.Create(c.filePath)
 	if err != nil {
 		panic(err)
@@ -20,6 +20,27 @@ func (c *Redirect) Execute() {
 	}()
 
 	os.Stdout = file
+	c.executor.Execute()
+}
+
+type RedirectStderr struct {
+	executor Executor
+	filePath string
+}
+
+func (c *RedirectStderr) Execute() {
+	file, err := os.Create(c.filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	temp := os.Stderr
+	defer func() {
+		os.Stderr = temp
+	}()
+
+	os.Stderr = file
 	c.executor.Execute()
 }
 

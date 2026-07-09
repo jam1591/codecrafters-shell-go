@@ -21,9 +21,13 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 	args := parseTokens(cmd)
 
 	redirectIndex := len(args)
+	redirectStderrIndex := len(args)
 	for i, arg := range args {
 		if arg == ">" || arg == "1>" {
 			redirectIndex = i
+			break
+		} else if arg == "2>" {
+			redirectStderrIndex = i
 			break
 		}
 	}
@@ -60,7 +64,14 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 		}
 	}
 
-	return &Redirect{
+	if redirectStderrIndex < redirectIndex {
+		return &RedirectStderr{
+			executor: executor,
+			filePath: args[redirectStderrIndex+1],
+		}
+	}
+
+	return &RedirectStdout{
 		executor: executor,
 		filePath: args[redirectIndex+1],
 	}
