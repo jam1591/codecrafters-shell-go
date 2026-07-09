@@ -20,9 +20,9 @@ type CommandFactory struct {
 func (f *CommandFactory) NewCommand(cmd string) Executor {
 	args := parseTokens(cmd)
 
-	var redirectIndex int
-	for i := range args {
-		if args[i] == ">" {
+	redirectIndex := len(args)
+	for i, arg := range args {
+		if arg == ">" {
 			redirectIndex = i
 			break
 		}
@@ -34,31 +34,27 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 		executor = &EchoCommand{
 			message: strings.Join(args[1:redirectIndex], " "),
 		}
-		break
 	case exitCommandName:
 		executor = &ExitCommand{}
-		break
 	case typeCommandName:
 		executor = &TypeCommand{
 			builtInCommands: strings.Split(builtIns, ", "),
 			command:         args[1],
 		}
-		break
 	case printCurrentDirectoryCommandName:
 		executor = &PrintCurrentDirectoryCommand{}
-		break
 	case changeDirectoryCommandName:
 		executor = &ChangeDirectoryCommand{
 			path: args[1],
 		}
-		break
 	default:
 		executor = &ExternalCommand{
 			command: args[0],
+			argv:    args[1:redirectIndex],
 		}
 	}
 
-	if redirectIndex == 0 {
+	if redirectIndex == len(args) {
 		return &NoRedirect{
 			executor: executor,
 		}
