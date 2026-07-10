@@ -22,8 +22,16 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 
 	redirectIndex := len(args)
 	redirectStderrIndex := len(args)
+	isAppend := false
+
 	for i, arg := range args {
 		switch arg {
+		case ">>", "1>>":
+			redirectIndex = i
+			isAppend = true
+		case "2>>":
+			redirectStderrIndex = i
+			isAppend = true
 		case ">", "1>":
 			redirectIndex = i
 		case "2>":
@@ -63,6 +71,7 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 		return &RedirectStdout{
 			executor: executor,
 			filePath: args[redirectIndex+1],
+			isAppend: isAppend,
 		}
 	}
 
@@ -70,6 +79,7 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 		return &RedirectStderr{
 			executor: executor,
 			filePath: args[redirectStderrIndex+1],
+			isAppend: isAppend,
 		}
 	}
 
