@@ -15,79 +15,76 @@ const (
 const builtIns = "echo, exit, type, pwd, cd"
 
 type CommandFactory struct {
-	parser *RedirectParser
-}
-
-func NewCommandFactory() *CommandFactory {
-	return &CommandFactory{
-		parser: &RedirectParser{},
-	}
 }
 
 func (f *CommandFactory) NewCommand(cmd string) Executor {
 	args := parseTokens(cmd)
-	if len(args) == 0 {
-		return &NoRedirect{executor: nil}
+
+	redirectIndex := len(args)
+	redirectStderrIndex := len(args)
+	isAppend := false
+
+	for i, arg := range args {
+		switch arg {
+		case ">>", "1>>":
+			redirectIndex = i
+			isAppend = true
+		case "2>>":
+			redirectStderrIndex = i
+			isAppend = true
+		case ">", "1>":
+			redirectIndex = i
+		case "2>":
+			redirectStderrIndex = i
+		}
 	}
 
-	// Parse redirects
-	info := f.parser.Parse(args)
-	commandArgs := args[:info.CommandEndIndex]
+	commandEndIndex := min(redirectIndex, redirectStderrIndex)
 
-	// Build executor
-	executor := f.buildExecutor(commandArgs)
-
-	// Wrap with redirect
-	opts := []RedirectOption{}
-	if info.StdoutPath != "" {
-		opts = append(opts, WithStdout(info.StdoutPath, info.IsAppend))
-	}
-	if info.StderrPath != "" {
-		opts = append(opts, WithStderr(info.StderrPath, info.IsAppend))
-	}
-
-	if len(opts) == 0 {
-		return &NoRedirect{executor: executor}
-	}
-
-	return Wrap(executor, opts...)
-}
-
-func (f *CommandFactory) buildExecutor(args []string) Executor {
-	if len(args) == 0 {
-		return &NoRedirect{executor: nil}
-	}
-
+	var executor Executor
 	switch args[0] {
 	case echoCommandName:
-		return &EchoCommand{
-			message: strings.Join(args[1:], " "),
+		executor = &EchoCommand{
+			message: strings.Join(args[1:commandEndIndex], " "),
 		}
 	case exitCommandName:
-		return &ExitCommand{}
+		executor = &ExitCommand{}
 	case typeCommandName:
-		if len(args) > 1 {
-			return &TypeCommand{
-				builtInCommands: strings.Split(builtIns, ", "),
-				command:         args[1],
-			}
-		}
-		return &TypeCommand{
+		executor = &TypeCommand{
 			builtInCommands: strings.Split(builtIns, ", "),
-			command:         "",
+			command:         args[1],
 		}
 	case printCurrentDirectoryCommandName:
-		return &PrintCurrentDirectoryCommand{}
+		executor = &PrintCurrentDirectoryCommand{}
 	case changeDirectoryCommandName:
-		if len(args) > 1 {
-			return &ChangeDirectoryCommand{path: args[1]}
+		executor = &ChangeDirectoryCommand{
+			path: args[1],
 		}
-		return &ChangeDirectoryCommand{path: ""}
 	default:
-		return &ExternalCommand{
+		executor = &ExternalCommand{
 			command: args[0],
-			argv:    args[1:],
+			argv:    args[1:commandEndIndex],
 		}
+	}
+
+	if redirectIndex < len(args) {
+		return &RedirectStdout{
+			executor: executor,
+			filePath: args[redirectIndex+1],
+			isAppend: isAppend,
+		}
+	}
+
+	if redirectStderrIndex < len(args) {
+		return &RedirectStderr{
+			executor: executor,
+			filePath: args[redirectStderrIndex+1],
+			isAppend: isAppend,
+		}
+	}
+
+	return &NoRedirect{
+		executor: executor,
 	}
 }
 
