@@ -15,37 +15,19 @@ const (
 const builtIns = "echo, exit, type, pwd, cd"
 
 type CommandFactory struct {
+	parser *RedirectParser
 }
 
 func (f *CommandFactory) NewCommand(cmd string) Executor {
 	args := parseTokens(cmd)
 
-	redirectIndex := len(args)
-	redirectStderrIndex := len(args)
-	isAppend := false
-
-	for i, arg := range args {
-		switch arg {
-		case ">>", "1>>":
-			redirectIndex = i
-			isAppend = true
-		case "2>>":
-			redirectStderrIndex = i
-			isAppend = true
-		case ">", "1>":
-			redirectIndex = i
-		case "2>":
-			redirectStderrIndex = i
-		}
-	}
-
-	commandEndIndex := min(redirectIndex, redirectStderrIndex)
+	redirectMetadata := f.parser.ParseInfo(args)
 
 	var executor Executor
 	switch args[0] {
 	case echoCommandName:
 		executor = &EchoCommand{
-			message: strings.Join(args[1:commandEndIndex], " "),
+			message: strings.Join(args[1:redirectMetadata.commandEndIndex], " "),
 		}
 	case exitCommandName:
 		executor = &ExitCommand{}
@@ -63,28 +45,13 @@ func (f *CommandFactory) NewCommand(cmd string) Executor {
 	default:
 		executor = &ExternalCommand{
 			command: args[0],
-			argv:    args[1:commandEndIndex],
+			argv:    args[1:redirectMetadata.commandEndIndex],
 		}
 	}
 
-	if redirectIndex < len(args) {
-		return &RedirectStdout{
-			executor: executor,
-			filePath: args[redirectIndex+1],
-			isAppend: isAppend,
-		}
-	}
-
-	if redirectStderrIndex < len(args) {
-		return &RedirectStderr{
-			executor: executor,
-			filePath: args[redirectStderrIndex+1],
-			isAppend: isAppend,
-		}
-	}
-
-	return &NoRedirect{
-		executor: executor,
+	return &RedirectCommand{
+		metadata: redirectMetadata,
+		inner:    executor,
 	}
 }
 
