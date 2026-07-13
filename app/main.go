@@ -53,7 +53,7 @@ func main() {
 				fmt.Println()
 				break completion
 			case 9:
-				partialCmd := strings.TrimSpace(string(command))
+				partialCmd := string(command)
 				var matches = make([]string, 0)
 				for _, cmd := range builtInsArray {
 					if strings.HasPrefix(cmd, partialCmd) {
