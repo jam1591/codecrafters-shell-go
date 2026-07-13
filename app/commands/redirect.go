@@ -1,0 +1,53 @@
+package commands
+
+import "os"
+
+const (
+	OVERRIDE = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	APPEND   = os.O_CREATE | os.O_WRONLY | os.O_APPEND
+)
+
+type RedirectMetadata struct {
+	FilePathStdout  string
+	FilePathStderr  string
+	IsAppend        bool
+	CommandEndIndex int
+}
+
+type RedirectCommand struct {
+	Metadata RedirectMetadata
+	Inner    Executor
+}
+
+func (c *RedirectCommand) Execute() {
+	if c.Metadata.FilePathStdout != "" {
+		file, err := os.OpenFile(c.Metadata.FilePathStdout, getFlagForRedirect(c.Metadata.IsAppend), 0643)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		temp := os.Stdout
+		defer func() { os.Stdout = temp }()
+		os.Stdout = file
+	}
+
+	if c.Metadata.FilePathStderr != "" {
+		file, err := os.OpenFile(c.Metadata.FilePathStderr, getFlagForRedirect(c.Metadata.IsAppend), 0643)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		temp := os.Stderr
+		defer func() { os.Stderr = temp }()
+		os.Stderr = file
+	}
+
+	c.Inner.Execute()
+}
+
+func getFlagForRedirect(isAppend bool) int {
+	if isAppend {
+		return APPEND
+	}
+	return OVERRIDE
+}

@@ -1,112 +1,45 @@
 package main
 
 import (
+	"shell-starter-go/app/commands"
 	"strings"
 )
 
-const (
-	echoCommandName                  = "echo"
-	exitCommandName                  = "exit"
-	typeCommandName                  = "type"
-	printCurrentDirectoryCommandName = "pwd"
-	changeDirectoryCommandName       = "cd"
-)
-
-const builtIns = "echo, exit, type, pwd, cd"
-
 type CommandFactory struct {
-	parser *RedirectParser
+	parser *Parser
 }
 
-func (f *CommandFactory) NewCommand(cmd string) Executor {
-	args := parseTokens(cmd)
+func (f *CommandFactory) NewCommand(cmd string) commands.Executor {
+	parsed := f.parser.Parse(cmd)
 
-	redirectMetadata := f.parser.ParseInfo(args)
-
-	var executor Executor
-	switch args[0] {
-	case echoCommandName:
-		executor = &EchoCommand{
-			message: strings.Join(args[1:redirectMetadata.commandEndIndex], " "),
+	var executor commands.Executor
+	switch parsed.Command {
+	case ECHO_COMMAND_NAME:
+		executor = &commands.EchoCommand{
+			Message: strings.Join(parsed.Args, " "),
 		}
-	case exitCommandName:
-		executor = &ExitCommand{}
-	case typeCommandName:
-		executor = &TypeCommand{
-			builtInCommands: strings.Split(builtIns, ", "),
-			command:         args[1],
+	case EXIT_COMMAND_NAME:
+		executor = &commands.ExitCommand{}
+	case TYPE_COMMAND_NAME:
+		executor = &commands.TypeCommand{
+			BuiltInCommands: strings.Split(BUILT_INS, ", "),
+			Command:         parsed.Args[0],
 		}
-	case printCurrentDirectoryCommandName:
-		executor = &PrintCurrentDirectoryCommand{}
-	case changeDirectoryCommandName:
-		executor = &ChangeDirectoryCommand{
-			path: args[1],
+	case PRINT_CURRENT_DIRECTORY_COMMAND_NAME:
+		executor = &commands.PrintCurrentDirectoryCommand{}
+	case CHANGE_DIRECTORY_COMMAND_NAME:
+		executor = &commands.ChangeDirectoryCommand{
+			Path: parsed.Args[0],
 		}
 	default:
-		executor = &ExternalCommand{
-			command: args[0],
-			argv:    args[1:redirectMetadata.commandEndIndex],
+		executor = &commands.ExternalCommand{
+			Command: parsed.Command,
+			Argv:    parsed.Args,
 		}
 	}
 
-	return &RedirectCommand{
-		metadata: redirectMetadata,
-		inner:    executor,
+	return &commands.RedirectCommand{
+		Metadata: parsed.Redirect,
+		Inner:    executor,
 	}
-}
-
-func parseTokens(rawCmd string) []string {
-	var tokens []string
-	var currToken strings.Builder
-	inSingleQuote := false
-	inDoubleQuote := false
-	escaping := false
-
-	for _, ch := range rawCmd {
-		if inSingleQuote {
-			if ch == '\'' {
-				inSingleQuote = false
-				continue
-			}
-			currToken.WriteByte(byte(ch))
-			continue
-		}
-
-		if escaping {
-			currToken.WriteByte(byte(ch))
-			escaping = false
-			continue
-		}
-
-		if ch == '\\' {
-			escaping = true
-			continue
-		}
-
-		if ch == '"' && !inSingleQuote {
-			inDoubleQuote = !inDoubleQuote
-			continue
-		}
-
-		if ch == '\'' && !inDoubleQuote {
-			inSingleQuote = true
-			continue
-		}
-
-		if ch == ' ' && !inDoubleQuote {
-			if currToken.Len() > 0 {
-				tokens = append(tokens, currToken.String())
-				currToken.Reset()
-			}
-			continue
-		}
-
-		currToken.WriteByte(byte(ch))
-	}
-
-	if currToken.Len() > 0 {
-		tokens = append(tokens, currToken.String())
-	}
-
-	return tokens
 }
