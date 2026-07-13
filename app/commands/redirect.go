@@ -22,24 +22,22 @@ type RedirectCommand struct {
 func (c *RedirectCommand) Execute() {
 	if c.Metadata.FilePathStdout != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStdout, getFlagForRedirect(c.Metadata.IsAppend), 0643)
-		if err != nil {
-			panic(err)
+		if err == nil {
+			defer file.Close()
+			temp := os.Stdout
+			defer func() { os.Stdout = temp }()
+			os.Stdout = file
 		}
-		defer file.Close()
-		temp := os.Stdout
-		defer func() { os.Stdout = temp }()
-		os.Stdout = file
 	}
 
 	if c.Metadata.FilePathStderr != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStderr, getFlagForRedirect(c.Metadata.IsAppend), 0643)
-		if err != nil {
-			panic(err)
+		if err == nil {
+			defer file.Close()
+			temp := os.Stderr
+			defer func() { os.Stderr = temp }()
+			os.Stderr = file
 		}
-		defer file.Close()
-		temp := os.Stderr
-		defer func() { os.Stderr = temp }()
-		os.Stderr = file
 	}
 
 	c.Inner.Execute()
