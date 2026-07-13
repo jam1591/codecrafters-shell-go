@@ -28,5 +28,5 @@ func (c *ExternalCommand) Execute() {
 		return
 	}
 
-	fmt.Printf("%s: command not found\n", c.Command)
+	fmt.Fprintf(os.Stderr, "%s: command not found\n", c.Command)
 }
