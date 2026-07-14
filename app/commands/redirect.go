@@ -21,11 +21,29 @@ type RedirectCommand struct {
 
 func (c *RedirectCommand) Execute() {
 	if c.Metadata.FilePathStdout != "" {
-		redirectStdout(c.Metadata.FilePathStdout, c.Metadata.IsAppend)
+		file, err := os.OpenFile(c.Metadata.FilePathStdout, getFlagForRedirect(c.Metadata.IsAppend), 0643)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		tempOut := os.Stdout
+		defer func() {
+			os.Stdout = tempOut
+		}()
+		os.Stdout = file
 	}
 
 	if c.Metadata.FilePathStderr != "" {
-		redirectStderr(c.Metadata.FilePathStderr, c.Metadata.IsAppend)
+		file, err := os.OpenFile(c.Metadata.FilePathStderr, getFlagForRedirect(c.Metadata.IsAppend), 0643)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		tempErr := os.Stderr
+		defer func() {
+			os.Stderr = tempErr
+		}()
+		os.Stderr = file
 	}
 
 	c.Inner.Execute()
