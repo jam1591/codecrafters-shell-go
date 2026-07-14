@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -20,11 +19,6 @@ func (c *ExternalCommand) Execute() {
 
 	err := cmd.Run()
 	if err == nil {
-		return
-	}
-
-	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) {
 		return
 	}
 
