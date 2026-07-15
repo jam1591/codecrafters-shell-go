@@ -9,6 +9,8 @@ import (
 	"golang.org/x/term"
 )
 
+var _ = fmt.Print
+
 const (
 	ECHO_COMMAND_NAME                    = "echo"
 	EXIT_COMMAND_NAME                    = "exit"
@@ -20,64 +22,60 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 func main() {
-	fd := int(os.Stdin.Fd())
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		panic(err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
 	reader := bufio.NewReader(os.Stdin)
-	builtInsArray := strings.Split(BUILT_INS, ", ")
 
 	for {
-		fmt.Fprintln(os.Stderr, "BUILD-MARKER-99887766")
 		fmt.Print("$ ")
 
-		oldState, err := term.MakeRaw(fd)
-		if err != nil {
-			panic(err)
-		}
+		command, _ := reader.ReadString('\n')
+		// var command []byte
 
-		var command []byte
-	completion:
-		for {
-			b, err := reader.ReadByte()
-			if err != nil {
-				term.Restore(fd, oldState)
-				fmt.Fprintln(os.Stderr, "Error reading input:", err)
-				os.Exit(1)
-			}
+		// completion:
+		// 	for {
+		// 		b, err := reader.ReadByte()
+		// 		if err != nil {
+		// 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
+		// 			os.Exit(1)
+		// 		}
 
-			switch b {
-			case 13: // Enter
-				fmt.Print("\r\n")
-				break completion
+		// 		builtInsArray := strings.Split(BUILT_INS, ", ")
 
-			case 127, 8: // Backspace
-				if len(command) > 0 {
-					command = command[:len(command)-1]
-					fmt.Print("\b \b")
-				}
+		// 		switch b {
+		// 		case 127, 8:
+		// 			fmt.Print("\b \b")
+		// 			continue
+		// 		case 13:
+		// 			fmt.Println()
+		// 			break completion
+		// 		case 9:
+		// 			partialCmd := strings.TrimSpace(string(command))
+		// 			var matches = make([]string, 0)
+		// 			for _, cmd := range builtInsArray {
+		// 				if strings.HasPrefix(cmd, partialCmd) {
+		// 					matches = append(matches, cmd)
+		// 				}
 
-			case 9: // Tab
-				partialCmd := strings.TrimSpace(string(command))
-				var matches []string
-				for _, cmd := range builtInsArray {
-					if strings.HasPrefix(cmd, partialCmd) {
-						matches = append(matches, cmd)
-					}
-				}
-				if len(matches) == 1 {
-					command = []byte(matches[0] + " ")
-					// \r  -> return to column 0
-					// \033[K -> erase to end of line (clears any stale chars from a longer previous draw)
-					fmt.Print("\r\033[K$ " + string(command))
-				} else if len(matches) > 1 {
-					fmt.Print("\r\n" + strings.Join(matches, "  ") + "\r\n$ " + string(command))
-				}
+		// 				if len(matches) == 1 {
+		// 					command = []byte(matches[0])
+		// 					command = append(command, ' ')
+		// 					fmt.Printf("\r$ %s", string(command))
+		// 				} else if len(matches) > 1 {
+		// 					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
+		// 				}
+		// 			}
 
-			default:
-				command = append(command, b)
-				fmt.Printf("%c", b)
-			}
-		}
+		// 			continue
+		// 		}
 
-		term.Restore(fd, oldState)
+		// 	command = append(command, b)
+		// 	fmt.Printf("%c", b)
+		// }
 
 		commandFactory := &CommandFactory{parser: &Parser{}}
 		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
