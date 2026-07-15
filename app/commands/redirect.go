@@ -1,6 +1,9 @@
 package commands
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 const (
 	OVERRIDE = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
@@ -23,26 +26,23 @@ func (c *RedirectCommand) Execute() {
 	if c.Metadata.FilePathStdout != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStdout, getFlagForRedirect(c.Metadata.IsAppend), 0643)
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "%s: %v\n", c.Metadata.FilePathStdout, err)
+			return
 		}
 		defer file.Close()
 		tempOut := os.Stdout
-		defer func() {
-			os.Stdout = tempOut
-		}()
+		defer func() { os.Stdout = tempOut }()
 		os.Stdout = file
 	}
-
 	if c.Metadata.FilePathStderr != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStderr, getFlagForRedirect(c.Metadata.IsAppend), 0643)
 		if err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "%s: %v\n", c.Metadata.FilePathStderr, err)
+			return
 		}
 		defer file.Close()
 		tempErr := os.Stderr
-		defer func() {
-			os.Stderr = tempErr
-		}()
+		defer func() { os.Stderr = tempErr }()
 		os.Stderr = file
 	}
 
