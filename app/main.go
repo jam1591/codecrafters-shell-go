@@ -26,7 +26,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -77,6 +76,8 @@ func main() {
 			command = append(command, b)
 			fmt.Printf("%c", b)
 		}
+
+		term.Restore(int(os.Stdin.Fd()), oldState)
 
 		commandFactory := &CommandFactory{parser: &Parser{}}
 		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
