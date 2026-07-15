@@ -1,15 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
-	"golang.org/x/term"
+	"github.com/chzyer/readline"
 )
-
-var _ = fmt.Print
 
 const (
 	ECHO_COMMAND_NAME                    = "echo"
@@ -22,63 +20,37 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 func main() {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	completer := readline.NewPrefixCompleter(
+		readline.PcItem(ECHO_COMMAND_NAME),
+		readline.PcItem(EXIT_COMMAND_NAME),
+	)
 
-	reader := bufio.NewReader(os.Stdin)
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:       "$ ",
+		AutoComplete: completer,
+	})
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error initializing readline:", err)
+		return
+	}
+	defer rl.Close()
+
+	commandFactory := &CommandFactory{parser: &Parser{}}
 
 	for {
-		fmt.Print("$ ")
+		command, err := rl.Readline()
 
-		command, _ := reader.ReadString('\n')
-		// var command []byte
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			fmt.Println("Error reading command:", err)
+			return
+		}
 
-		// completion:
-		// 	for {
-		// 		b, err := reader.ReadByte()
-		// 		if err != nil {
-		// 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
-		// 			os.Exit(1)
-		// 		}
-
-		// 		builtInsArray := strings.Split(BUILT_INS, ", ")
-
-		// 		switch b {
-		// 		case 127, 8:
-		// 			fmt.Print("\b \b")
-		// 			continue
-		// 		case 13:
-		// 			fmt.Println()
-		// 			break completion
-		// 		case 9:
-		// 			partialCmd := strings.TrimSpace(string(command))
-		// 			var matches = make([]string, 0)
-		// 			for _, cmd := range builtInsArray {
-		// 				if strings.HasPrefix(cmd, partialCmd) {
-		// 					matches = append(matches, cmd)
-		// 				}
-
-		// 				if len(matches) == 1 {
-		// 					command = []byte(matches[0])
-		// 					command = append(command, ' ')
-		// 					fmt.Printf("\r$ %s", string(command))
-		// 				} else if len(matches) > 1 {
-		// 					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
-		// 				}
-		// 			}
-
-		// 			continue
-		// 		}
-
-		// 	command = append(command, b)
-		// 	fmt.Printf("%c", b)
-		// }
-
-		commandFactory := &CommandFactory{parser: &Parser{}}
-		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
+		command = strings.TrimSpace(command)
+		executor := commandFactory.NewCommand(command)
 		executor.Execute()
 	}
 }
