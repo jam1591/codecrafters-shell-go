@@ -22,30 +22,27 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 func main() {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-
+	fd := int(os.Stdin.Fd())
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		fmt.Print("$ ")
 
-		// command, _ := reader.ReadString('\n')
-		// var command []byte
+		oldState, err := term.MakeRaw(fd)
+		if err != nil {
+			panic(err)
+		}
 
 		var command []byte
 	completion:
 		for {
 			b, err := reader.ReadByte()
 			if err != nil {
+				term.Restore(fd, oldState)
 				fmt.Fprintln(os.Stderr, "Error reading input:", err)
 				os.Exit(1)
 			}
-
 			builtInsArray := strings.Split(BUILT_INS, ", ")
-
 			switch b {
 			case 127, 8:
 				fmt.Print("\b \b")
@@ -60,7 +57,6 @@ func main() {
 					if strings.HasPrefix(cmd, partialCmd) {
 						matches = append(matches, cmd)
 					}
-
 					if len(matches) == 1 {
 						command = []byte(matches[0])
 						command = append(command, ' ')
@@ -69,15 +65,13 @@ func main() {
 						fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
 					}
 				}
-
 				continue
 			}
-
 			command = append(command, b)
 			fmt.Printf("%c", b)
 		}
 
-		term.Restore(int(os.Stdin.Fd()), oldState)
+		term.Restore(fd, oldState)
 
 		commandFactory := &CommandFactory{parser: &Parser{}}
 		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
