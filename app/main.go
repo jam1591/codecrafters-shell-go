@@ -25,6 +25,7 @@ func main() {
 	builtInsArray := strings.Split(BUILT_INS, ", ")
 
 	for {
+		fmt.Fprintln(os.Stderr, "BUILD-MARKER-99887766")
 		fmt.Print("$ ")
 
 		oldState, err := term.MakeRaw(fd)
