@@ -48,7 +48,7 @@ func main() {
 				fmt.Print("\b \b")
 				continue
 			case 13:
-				fmt.Println()
+				fmt.Print("\r\n")
 				break completion
 			case 9:
 				partialCmd := strings.TrimSpace(string(command))

@@ -26,7 +26,7 @@ func (c *RedirectCommand) Execute() {
 	if c.Metadata.FilePathStdout != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStdout, getFlagForRedirect(c.Metadata.IsAppend), 0643)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %v\n", c.Metadata.FilePathStdout, err)
+			fmt.Fprintf(os.Stderr, "%s: %v\r\n", c.Metadata.FilePathStdout, err)
 			return
 		}
 		defer file.Close()
@@ -37,7 +37,7 @@ func (c *RedirectCommand) Execute() {
 	if c.Metadata.FilePathStderr != "" {
 		file, err := os.OpenFile(c.Metadata.FilePathStderr, getFlagForRedirect(c.Metadata.IsAppend), 0643)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %v\n", c.Metadata.FilePathStderr, err)
+			fmt.Fprintf(os.Stderr, "%s: %v\r\n", c.Metadata.FilePathStderr, err)
 			return
 		}
 		defer file.Close()
