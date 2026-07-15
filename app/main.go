@@ -63,9 +63,11 @@ func main() {
 				}
 				if len(matches) == 1 {
 					command = []byte(matches[0] + " ")
-					fmt.Printf("\r$ %s", string(command))
+					// \r  -> return to column 0
+					// \033[K -> erase to end of line (clears any stale chars from a longer previous draw)
+					fmt.Print("\r\033[K$ " + string(command))
 				} else if len(matches) > 1 {
-					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
+					fmt.Print("\r\n" + strings.Join(matches, "  ") + "\r\n$ " + string(command))
 				}
 
 			default:
