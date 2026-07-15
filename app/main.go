@@ -9,8 +9,6 @@ import (
 	"golang.org/x/term"
 )
 
-var _ = fmt.Print
-
 const (
 	ECHO_COMMAND_NAME                    = "echo"
 	EXIT_COMMAND_NAME                    = "exit"
@@ -22,60 +20,61 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 func main() {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		panic(err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
-
+	fd := int(os.Stdin.Fd())
 	reader := bufio.NewReader(os.Stdin)
+	builtInsArray := strings.Split(BUILT_INS, ", ")
 
 	for {
 		fmt.Print("$ ")
 
-		command, _ := reader.ReadString('\n')
-		// var command []byte
+		oldState, err := term.MakeRaw(fd)
+		if err != nil {
+			panic(err)
+		}
 
-		// completion:
-		// 	for {
-		// 		b, err := reader.ReadByte()
-		// 		if err != nil {
-		// 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
-		// 			os.Exit(1)
-		// 		}
+		var command []byte
+	completion:
+		for {
+			b, err := reader.ReadByte()
+			if err != nil {
+				term.Restore(fd, oldState)
+				fmt.Fprintln(os.Stderr, "Error reading input:", err)
+				os.Exit(1)
+			}
 
-		// 		builtInsArray := strings.Split(BUILT_INS, ", ")
+			switch b {
+			case 13: // Enter
+				fmt.Print("\r\n")
+				break completion
 
-		// 		switch b {
-		// 		case 127, 8:
-		// 			fmt.Print("\b \b")
-		// 			continue
-		// 		case 13:
-		// 			fmt.Println()
-		// 			break completion
-		// 		case 9:
-		// 			partialCmd := strings.TrimSpace(string(command))
-		// 			var matches = make([]string, 0)
-		// 			for _, cmd := range builtInsArray {
-		// 				if strings.HasPrefix(cmd, partialCmd) {
-		// 					matches = append(matches, cmd)
-		// 				}
+			case 127, 8: // Backspace
+				if len(command) > 0 {
+					command = command[:len(command)-1]
+					fmt.Print("\b \b")
+				}
 
-		// 				if len(matches) == 1 {
-		// 					command = []byte(matches[0])
-		// 					command = append(command, ' ')
-		// 					fmt.Printf("\r$ %s", string(command))
-		// 				} else if len(matches) > 1 {
-		// 					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
-		// 				}
-		// 			}
+			case 9: // Tab
+				partialCmd := strings.TrimSpace(string(command))
+				var matches []string
+				for _, cmd := range builtInsArray {
+					if strings.HasPrefix(cmd, partialCmd) {
+						matches = append(matches, cmd)
+					}
+				}
+				if len(matches) == 1 {
+					command = []byte(matches[0] + " ")
+					fmt.Printf("\r$ %s", string(command))
+				} else if len(matches) > 1 {
+					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
+				}
 
-		// 			continue
-		// 		}
+			default:
+				command = append(command, b)
+				fmt.Printf("%c", b)
+			}
+		}
 
-		// 	command = append(command, b)
-		// 	fmt.Printf("%c", b)
-		// }
+		term.Restore(fd, oldState)
 
 		commandFactory := &CommandFactory{parser: &Parser{}}
 		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
