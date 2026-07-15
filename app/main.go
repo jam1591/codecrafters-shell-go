@@ -33,49 +33,50 @@ func main() {
 	for {
 		fmt.Print("$ ")
 
-		command, _ := reader.ReadString('\n')
+		// command, _ := reader.ReadString('\n')
 		// var command []byte
 
-		// completion:
-		// 	for {
-		// 		b, err := reader.ReadByte()
-		// 		if err != nil {
-		// 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
-		// 			os.Exit(1)
-		// 		}
+		var command []byte
+	completion:
+		for {
+			b, err := reader.ReadByte()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Error reading input:", err)
+				os.Exit(1)
+			}
 
-		// 		builtInsArray := strings.Split(BUILT_INS, ", ")
+			builtInsArray := strings.Split(BUILT_INS, ", ")
 
-		// 		switch b {
-		// 		case 127, 8:
-		// 			fmt.Print("\b \b")
-		// 			continue
-		// 		case 13:
-		// 			fmt.Println()
-		// 			break completion
-		// 		case 9:
-		// 			partialCmd := strings.TrimSpace(string(command))
-		// 			var matches = make([]string, 0)
-		// 			for _, cmd := range builtInsArray {
-		// 				if strings.HasPrefix(cmd, partialCmd) {
-		// 					matches = append(matches, cmd)
-		// 				}
+			switch b {
+			case 127, 8:
+				fmt.Print("\b \b")
+				continue
+			case 13:
+				fmt.Println()
+				break completion
+			case 9:
+				partialCmd := strings.TrimSpace(string(command))
+				var matches = make([]string, 0)
+				for _, cmd := range builtInsArray {
+					if strings.HasPrefix(cmd, partialCmd) {
+						matches = append(matches, cmd)
+					}
 
-		// 				if len(matches) == 1 {
-		// 					command = []byte(matches[0])
-		// 					command = append(command, ' ')
-		// 					fmt.Printf("\r$ %s", string(command))
-		// 				} else if len(matches) > 1 {
-		// 					fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
-		// 				}
-		// 			}
+					if len(matches) == 1 {
+						command = []byte(matches[0])
+						command = append(command, ' ')
+						fmt.Printf("\r$ %s", string(command))
+					} else if len(matches) > 1 {
+						fmt.Printf("\r\n%v\r\n$ %s", matches, string(command))
+					}
+				}
 
-		// 			continue
-		// 		}
+				continue
+			}
 
-		// 	command = append(command, b)
-		// 	fmt.Printf("%c", b)
-		// }
+			command = append(command, b)
+			fmt.Printf("%c", b)
+		}
 
 		commandFactory := &CommandFactory{parser: &Parser{}}
 		executor := commandFactory.NewCommand(strings.TrimSpace(string(command)))
