@@ -28,18 +28,19 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := b.AutoCompleter.Do(line, pos)
 
 	if len(matches) == 0 {
-		b.term.Bell()
+		fmt.Fprint(os.Stderr, "\a")
 	}
 
 	return matches, length
 }
 
 func main() {
-	completer := readline.NewPrefixCompleter(
-		readline.PcItem("help"),
+	prefixCompleter := readline.NewPrefixCompleter(
 		readline.PcItem(ECHO_COMMAND_NAME),
 		readline.PcItem(EXIT_COMMAND_NAME),
 	)
+
+	completer := &Completer{AutoCompleter: prefixCompleter}
 
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:       "$ ",
@@ -51,6 +52,8 @@ func main() {
 		return
 	}
 	defer rl.Close()
+
+	completer.term = rl.Terminal
 
 	commandFactory := &CommandFactory{parser: &Parser{}}
 
