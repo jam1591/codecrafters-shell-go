@@ -19,8 +19,24 @@ const (
 
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
+type Completer struct {
+	readline.AutoCompleter
+	term *readline.Terminal
+}
+
+func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
+	matches, length := b.AutoCompleter.Do(line, pos)
+
+	if len(matches) == 0 {
+		b.term.Bell()
+	}
+
+	return matches, length
+}
+
 func main() {
 	completer := readline.NewPrefixCompleter(
+		readline.PcItem("help"),
 		readline.PcItem(ECHO_COMMAND_NAME),
 		readline.PcItem(EXIT_COMMAND_NAME),
 	)
