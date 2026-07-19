@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -21,7 +21,6 @@ const BUILT_INS = "echo, exit, type, pwd, cd"
 
 type Completer struct {
 	readline.AutoCompleter
-	term *readline.Terminal
 }
 
 func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
@@ -35,41 +34,40 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 }
 
 func main() {
-	prefixCompleter := readline.NewPrefixCompleter(
-		readline.PcItem(ECHO_COMMAND_NAME),
-		readline.PcItem(EXIT_COMMAND_NAME),
-	)
+	var completers []readline.PrefixCompleterInterface
+	completers = append(completers, readline.PcItem(ECHO_COMMAND_NAME))
+	completers = append(completers, readline.PcItem(EXIT_COMMAND_NAME))
 
-	completer := &Completer{AutoCompleter: prefixCompleter}
+	for _, path := range filepath.SplitList(os.Getenv("PATH")) {
+		files, _ := os.ReadDir(path)
+		for _, f := range files {
+			info, _ := f.Info()
+			if !info.IsDir() && info.Mode().Perm()&0111 != 0 {
+				completers = append(completers, readline.PcItem(info.Name()))
+			}
+		}
+	}
 
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:       "$ ",
-		AutoComplete: completer,
+		AutoComplete: &Completer{readline.NewPrefixCompleter(completers...)},
 	})
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error initializing readline:", err)
-		return
+		panic(err)
 	}
 	defer rl.Close()
-
-	completer.term = rl.Terminal
 
 	commandFactory := &CommandFactory{parser: &Parser{}}
 
 	for {
 		command, err := rl.Readline()
 
-		if err == io.EOF {
-			return
-		}
 		if err != nil {
-			fmt.Println("Error reading command:", err)
-			return
+			break
 		}
 
-		command = strings.TrimSpace(command)
-		executor := commandFactory.NewCommand(command)
+		executor := commandFactory.NewCommand(strings.TrimSpace(command))
 		executor.Execute()
 	}
 }
