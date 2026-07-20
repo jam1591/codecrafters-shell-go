@@ -49,14 +49,15 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		return [][]rune{}, 0
 	}
 
-	sorted := make([]string, len(matches))
+	prefix := string(line)
+	full := make([]string, len(matches))
 	for i, m := range matches {
-		sorted[i] = string(m)
+		full[i] = prefix + string(m)
 	}
-	sort.Strings(sorted)
+	sort.Strings(full)
 
 	fmt.Println()
-	fmt.Println(strings.Join(sorted, "  "))
+	fmt.Println(strings.Join(full, "  "))
 
 	c.state.isLastBellAmbiguous = false
 
