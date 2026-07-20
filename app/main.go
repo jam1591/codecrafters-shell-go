@@ -59,7 +59,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	fmt.Println()
 	fmt.Println(strings.Join(full, "  "))
 	fmt.Print("$ " + prefix)
-
+	fmt.Print("1111111111111111111111111111111")
 	c.state.isLastBellAmbiguous = false
 
 	return [][]rune{}, 0
