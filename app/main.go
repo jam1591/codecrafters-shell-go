@@ -53,6 +53,7 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	for i, m := range matches {
 		sorted[i] = string(m)
 	}
+
 	sort.Strings(sorted)
 
 	fmt.Println()
