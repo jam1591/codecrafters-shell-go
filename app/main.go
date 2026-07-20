@@ -20,27 +20,19 @@ const (
 
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
-type State struct {
-	count int
-}
-
 type Completer struct {
 	completer readline.AutoCompleter
-	state     State
 }
 
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	c.state.count++
 	matches, length := c.completer.Do(line, pos)
-	fmt.Fprintf(os.Stderr, "\n[DEBUG] Do called, matches=%d\n", len(matches))
 
-	if c.state.count == 2 {
+	if len(matches) > 2 {
 		sorted := make([]string, len(matches))
 		for i, m := range matches {
 			sorted[i] = string(m)
 		}
 		sort.Strings(sorted)
-		fmt.Fprintf(os.Stderr, "[DEBUG] second tab, raw matches=%q sorted=%q\n", matches, sorted)
 
 		fmt.Println()
 		fmt.Println(strings.Join(sorted, "  "))
