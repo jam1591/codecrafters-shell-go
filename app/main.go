@@ -31,6 +31,7 @@ type Completer struct {
 
 func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := b.completer.Do(line, pos)
+	fmt.Fprintf(os.Stderr, "\n[DEBUG] Do called, matches=%d, isLastBellAmbiguous=%v\n", len(matches), b.state.isLastBellAmbiguous)
 
 	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
@@ -46,6 +47,7 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if !b.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		b.state.isLastBellAmbiguous = true
+		fmt.Fprintln(os.Stderr, "[DEBUG] first tab, beeped")
 		return matches, length
 	}
 
@@ -53,11 +55,11 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	for i, m := range matches {
 		sorted[i] = string(m)
 	}
-
 	sort.Strings(sorted)
+	fmt.Fprintf(os.Stderr, "[DEBUG] second tab, raw matches=%q sorted=%q\n", matches, sorted)
 
 	fmt.Println()
-	fmt.Println(strings.Join(sorted, "	"))
+	fmt.Println(strings.Join(sorted, "  "))
 
 	b.state.isLastBellAmbiguous = false
 
