@@ -46,7 +46,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = true
-		return nil, length
+		return nil, 0
 	}
 
 	sorted := make([]string, len(matches))
@@ -60,7 +60,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 	c.state.isLastBellAmbiguous = false
 
-	return nil, length
+	return nil, 0
 }
 
 func main() {
