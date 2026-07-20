@@ -60,7 +60,7 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		fmt.Println(strings.Join(strs, "	"))
 	}
 
-	return [][]rune{line}, 0
+	return matches, length
 }
 
 func main() {
