@@ -27,6 +27,7 @@ type State struct {
 type Completer struct {
 	completer readline.AutoCompleter
 	state     State
+	rl        *readline.Instance
 }
 
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
@@ -46,7 +47,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = true
-		return matches, length
+		return [][]rune{}, 0
 	}
 
 	prefix := string(line)
@@ -61,7 +62,11 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 	c.state.isLastBellAmbiguous = false
 
-	return matches, length
+	if c.rl == nil {
+		c.rl.Refresh()
+	}
+
+	return [][]rune{}, 0
 }
 
 func main() {
