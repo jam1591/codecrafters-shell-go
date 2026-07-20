@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/chzyer/readline"
 )
@@ -19,18 +20,47 @@ const (
 
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
+type State struct {
+	tabTime  time.Time
+	tabCount int
+}
+
 type Completer struct {
-	readline.AutoCompleter
+	completer readline.AutoCompleter
+	state     State
 }
 
 func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	matches, length := b.AutoCompleter.Do(line, pos)
+	matches, length := b.completer.Do(line, pos)
+	now := time.Now()
+	isDouble := now.Sub(b.state.tabTime) < 500*time.Millisecond
 
-	if len(matches) == 0 {
-		fmt.Fprint(os.Stderr, "\a")
+	b.state.tabTime = now
+
+	if !isDouble {
+		b.state.tabCount = 1
+		if len(matches) == 0 {
+			fmt.Fprint(os.Stderr, "\a")
+		}
+		return nil, 0
 	}
 
-	return matches, length
+	if len(matches) == 1 {
+		return matches, length
+	}
+
+	b.state.tabCount++
+
+	if len(matches) > 1 {
+		var strs []string
+		for _, match := range matches {
+			strs = append(strs, string(match))
+		}
+		fmt.Println()
+		fmt.Println(strings.Join(strs, "	"))
+	}
+
+	return [][]rune{line}, 0
 }
 
 func main() {
@@ -50,7 +80,7 @@ func main() {
 
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:       "$ ",
-		AutoComplete: &Completer{readline.NewPrefixCompleter(completers...)},
+		AutoComplete: &Completer{completer: readline.NewPrefixCompleter(completers...)},
 	})
 
 	if err != nil {
