@@ -21,7 +21,7 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 type State struct {
-	isLastBellAmbiguous bool
+	count int
 }
 
 type Completer struct {
@@ -29,30 +29,35 @@ type Completer struct {
 	state     State
 }
 
-func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	matches, length := b.completer.Do(line, pos)
+func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
+	c.state.count++
+	matches, length := c.completer.Do(line, pos)
+	fmt.Fprintf(os.Stderr, "\n[DEBUG] Do called, matches=%d, isLastBellAmbiguous=%v\n", len(matches))
 
-	if len(matches) > 1 {
-		sort.Slice(matches, func(i, j int) bool {
-			return string(matches[i]) < string(matches[j])
-		})
+	if c.state.count == 2 && len(matches) >= 2 {
+		sorted := make([]string, len(matches))
+		for i, m := range matches {
+			sorted[i] = string(m)
+		}
+		sort.Strings(sorted)
+		fmt.Fprintf(os.Stderr, "[DEBUG] second tab, raw matches=%q sorted=%q\n", matches, sorted)
+
+		fmt.Println()
+		fmt.Println(strings.Join(sorted, "  "))
+		c.state.count = 0
 	}
 
-	switch len(matches) {
-	case 0:
+	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
-		b.state.isLastBellAmbiguous = false
+		return matches, length
+	}
 
-	case 1:
-		b.state.isLastBellAmbiguous = false
+	if len(matches) == 1 {
+		return matches, length
+	}
 
-	default: // more than 1 match
-		if !b.state.isLastBellAmbiguous {
-			fmt.Fprint(os.Stderr, "\a")
-			b.state.isLastBellAmbiguous = true
-		} else {
-			b.state.isLastBellAmbiguous = false
-		}
+	if len(matches) > 1 {
+		fmt.Fprint(os.Stderr, "\a")
 	}
 
 	return matches, length
