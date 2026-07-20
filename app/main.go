@@ -32,30 +32,37 @@ type Completer struct {
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := c.completer.Do(line, pos)
 
-	if len(matches) != 1 {
-		if len(matches) == 0 {
-			fmt.Fprint(os.Stderr, "\a")
-		} else if !c.state.isLastBellAmbiguous {
-			fmt.Fprint(os.Stderr, "\a")
-			c.state.isLastBellAmbiguous = true
-			return [][]rune{}, 0
-		} else {
-			prefix := string(line)
-			full := make([]string, len(matches))
-			for i, m := range matches {
-				full[i] = prefix + string(m)
-			}
-			sort.Strings(full)
-			fmt.Println()
-			fmt.Println(strings.Join(full, "  "))
-			fmt.Print("$ " + prefix)
-		}
+	if len(matches) == 0 {
+		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = false
+		return matches, length
+	}
+
+	if len(matches) == 1 {
+		c.state.isLastBellAmbiguous = false
+		return matches, length
+	}
+
+	if !c.state.isLastBellAmbiguous {
+		fmt.Fprint(os.Stderr, "\a")
+		c.state.isLastBellAmbiguous = true
 		return [][]rune{}, 0
 	}
 
+	prefix := string(line)
+	full := make([]string, len(matches))
+	for i, m := range matches {
+		full[i] = prefix + string(m)
+	}
+	sort.Strings(full)
+
+	fmt.Println()
+	fmt.Println(strings.Join(full, "  "))
+	fmt.Print("$ " + prefix)
+
 	c.state.isLastBellAmbiguous = false
-	return matches, length
+
+	return [][]rune{}, 0
 }
 
 func main() {
