@@ -27,7 +27,6 @@ type State struct {
 type Completer struct {
 	completer readline.AutoCompleter
 	state     State
-	rl        *readline.Instance
 }
 
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
@@ -49,7 +48,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 			sort.Strings(full)
 			fmt.Println()
 			fmt.Println(strings.Join(full, "  "))
-			c.rl.Refresh()
+			fmt.Print("$ " + prefix)
 		}
 		c.state.isLastBellAmbiguous = false
 		return [][]rune{}, 0
