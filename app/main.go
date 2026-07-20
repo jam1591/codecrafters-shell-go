@@ -39,6 +39,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	}
 
 	if len(matches) == 1 {
+		fmt.Println("match 111111111111111111")
 		c.state.isLastBellAmbiguous = false
 		return matches, length
 	}
