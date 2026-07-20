@@ -21,8 +21,7 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 type State struct {
-	tabTime  time.Time
-	tabCount int
+	tabTime time.Time
 }
 
 type Completer struct {
@@ -33,25 +32,16 @@ type Completer struct {
 func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := b.completer.Do(line, pos)
 	now := time.Now()
-	isDouble := now.Sub(b.state.tabTime) < 500*time.Millisecond
 
 	b.state.tabTime = now
 
-	if !isDouble {
-		b.state.tabCount = 1
-		if len(matches) == 0 {
-			fmt.Fprint(os.Stderr, "\a")
-		}
-		return nil, 0
+	if len(matches) == 0 {
+		fmt.Fprint(os.Stderr, "\a")
 	}
 
-	if len(matches) == 1 {
-		return matches, length
-	}
+	isDouble := now.Sub(b.state.tabTime) < 500*time.Millisecond
 
-	b.state.tabCount++
-
-	if len(matches) > 1 {
+	if isDouble && len(matches) > 1 {
 		var strs []string
 		for _, match := range matches {
 			strs = append(strs, string(match))
