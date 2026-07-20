@@ -31,8 +31,6 @@ type Completer struct {
 
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := c.completer.Do(line, pos)
-	fmt.Fprintf(os.Stderr, "[DEBUG] Do() called | line=%q matches=%d flag=%v\n",
-		string(line), len(matches), c.state.isLastBellAmbiguous)
 
 	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
