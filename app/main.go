@@ -46,7 +46,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = true
-		return [][]rune{}, 0
+		return matches, length
 	}
 
 	prefix := string(line)
@@ -61,7 +61,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 	c.state.isLastBellAmbiguous = false
 
-	return [][]rune{}, 0
+	return matches, length
 }
 
 func main() {
