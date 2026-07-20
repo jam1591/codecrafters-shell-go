@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/chzyer/readline"
 )
@@ -22,8 +21,7 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 type State struct {
-	tabTime              time.Time
-	lastWasAmbiguousBell bool
+	isLastBellAmbiguous bool
 }
 
 type Completer struct {
@@ -35,27 +33,22 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := b.completer.Do(line, pos)
 
 	if len(matches) == 0 {
-		// no matches at all — just beep, reset flag
 		fmt.Fprint(os.Stderr, "\a")
-		b.state.lastWasAmbiguousBell = false
+		b.state.isLastBellAmbiguous = false
 		return matches, length
 	}
 
 	if len(matches) == 1 {
-		// unambiguous — complete silently, reset flag
-		b.state.lastWasAmbiguousBell = false
+		b.state.isLastBellAmbiguous = false
 		return matches, length
 	}
 
-	// len(matches) > 1 from here on
-	if !b.state.lastWasAmbiguousBell {
-		// first TAB: just beep
+	if !b.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
-		b.state.lastWasAmbiguousBell = true
+		b.state.isLastBellAmbiguous = true
 		return matches, length
 	}
 
-	// second TAB: list them
 	sorted := make([]string, len(matches))
 	for i, m := range matches {
 		sorted[i] = string(m)
@@ -63,9 +56,9 @@ func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	sort.Strings(sorted)
 
 	fmt.Println()
-	fmt.Println(strings.Join(sorted, "  "))
+	fmt.Println(strings.Join(sorted, "	"))
 
-	b.state.lastWasAmbiguousBell = false
+	b.state.isLastBellAmbiguous = false
 
 	return matches, length
 }
