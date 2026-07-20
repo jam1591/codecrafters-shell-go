@@ -20,24 +20,35 @@ const (
 
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
+type State struct {
+	isLastBellAmbiguous bool
+}
+
 type Completer struct {
 	completer readline.AutoCompleter
+	state     State
 }
 
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := c.completer.Do(line, pos)
+	fmt.Fprintf(os.Stderr, "[DEBUG] Do() called | line=%q matches=%d flag=%v\n",
+		string(line), len(matches), c.state.isLastBellAmbiguous)
 
 	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
+		c.state.isLastBellAmbiguous = false
 		return matches, length
 	}
 
 	if len(matches) == 1 {
+		c.state.isLastBellAmbiguous = false
 		return matches, length
 	}
 
-	if len(matches) > 1 {
+	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
+		c.state.isLastBellAmbiguous = true
+		return nil, length
 	}
 
 	sorted := make([]string, len(matches))
@@ -49,7 +60,9 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	fmt.Println()
 	fmt.Println(strings.Join(sorted, "  "))
 
-	return matches, length
+	c.state.isLastBellAmbiguous = false
+
+	return nil, length
 }
 
 func main() {
