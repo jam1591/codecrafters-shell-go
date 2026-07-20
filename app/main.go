@@ -27,17 +27,6 @@ type Completer struct {
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := c.completer.Do(line, pos)
 
-	if len(matches) > 2 {
-		sorted := make([]string, len(matches))
-		for i, m := range matches {
-			sorted[i] = string(m)
-		}
-		sort.Strings(sorted)
-
-		fmt.Println()
-		fmt.Println(strings.Join(sorted, "  "))
-	}
-
 	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
 		return matches, length
@@ -50,6 +39,15 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if len(matches) > 1 {
 		fmt.Fprint(os.Stderr, "\a")
 	}
+
+	sorted := make([]string, len(matches))
+	for i, m := range matches {
+		sorted[i] = string(m)
+	}
+	sort.Strings(sorted)
+
+	fmt.Println()
+	fmt.Println(strings.Join(sorted, "  "))
 
 	return matches, length
 }
