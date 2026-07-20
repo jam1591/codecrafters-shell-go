@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -21,7 +22,8 @@ const (
 const BUILT_INS = "echo, exit, type, pwd, cd"
 
 type State struct {
-	tabTime time.Time
+	tabTime              time.Time
+	lastWasAmbiguousBell bool
 }
 
 type Completer struct {
@@ -31,24 +33,39 @@ type Completer struct {
 
 func (b *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := b.completer.Do(line, pos)
-	now := time.Now()
-
-	b.state.tabTime = now
 
 	if len(matches) == 0 {
+		// no matches at all — just beep, reset flag
 		fmt.Fprint(os.Stderr, "\a")
+		b.state.lastWasAmbiguousBell = false
+		return matches, length
 	}
 
-	isDouble := now.Sub(b.state.tabTime) < 500*time.Millisecond
-
-	if isDouble && len(matches) > 1 {
-		var strs []string
-		for _, match := range matches {
-			strs = append(strs, string(match))
-		}
-		fmt.Println()
-		fmt.Println(strings.Join(strs, "	"))
+	if len(matches) == 1 {
+		// unambiguous — complete silently, reset flag
+		b.state.lastWasAmbiguousBell = false
+		return matches, length
 	}
+
+	// len(matches) > 1 from here on
+	if !b.state.lastWasAmbiguousBell {
+		// first TAB: just beep
+		fmt.Fprint(os.Stderr, "\a")
+		b.state.lastWasAmbiguousBell = true
+		return matches, length
+	}
+
+	// second TAB: list them
+	sorted := make([]string, len(matches))
+	for i, m := range matches {
+		sorted[i] = string(m)
+	}
+	sort.Strings(sorted)
+
+	fmt.Println()
+	fmt.Println(strings.Join(sorted, "  "))
+
+	b.state.lastWasAmbiguousBell = false
 
 	return matches, length
 }
