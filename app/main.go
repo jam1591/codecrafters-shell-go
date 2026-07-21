@@ -53,6 +53,24 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		return matches, length
 	}
 
+	// find longest common prefix
+	lcp := matches[0]
+	for _, m := range matches[1:] {
+		i := 0
+		for i < len(lcp) && i < len(m) && lcp[i] == m[i] {
+			i++
+		}
+		lcp = lcp[:i]
+	}
+
+	fmt.Println("lcp is", string(lcp))
+
+	// can we complete further?
+	if len(lcp) > len(line) {
+		c.state.isLastBellAmbiguous = false
+		return [][]rune{lcp}, len(lcp)
+	}
+
 	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = true
@@ -66,22 +84,9 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	}
 	sort.Strings(full)
 
-	result := make([][]string, len(full))
-	for i, s := range full {
-		result[i] = strings.Split(s, "_")
-	}
-	fmt.Println(result)
-
 	fmt.Println()
 	fmt.Println(strings.Join(full, "  "))
 	c.state.isLastBellAmbiguous = false
-
-	for _, s := range result {
-		if strings.Join(s[:len(s)-1], "_") == string(line) {
-			fmt.Println(s)
-			return [][]rune{[]rune(strings.Join(s, "_"))}, 1
-		}
-	}
 
 	fmt.Print("$ " + prefix)
 	return nil, 0
