@@ -70,6 +70,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	for i, s := range full {
 		result[i] = strings.Split(s, "_")
 	}
+	fmt.Println(result)
 
 	fmt.Println()
 	fmt.Println(strings.Join(full, "  "))
@@ -77,6 +78,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 	for _, s := range result {
 		if strings.Join(s[:len(s)-1], "_") == string(line) {
+			fmt.Println(s)
 			return [][]rune{[]rune(strings.Join(s, "_"))}, 1
 		}
 	}
