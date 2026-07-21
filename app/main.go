@@ -32,6 +32,16 @@ type Completer struct {
 func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	matches, length := c.completer.Do(line, pos)
 
+	unique := make(map[string][]rune)
+	for _, m := range matches {
+		unique[string(m)] = m
+	}
+
+	matches = matches[:0]
+	for _, m := range unique {
+		matches = append(matches, m)
+	}
+
 	if len(matches) == 0 {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = false
@@ -46,7 +56,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	if !c.state.isLastBellAmbiguous {
 		fmt.Fprint(os.Stderr, "\a")
 		c.state.isLastBellAmbiguous = true
-		return [][]rune{}, 0
+		return nil, 0
 	}
 
 	prefix := string(line)
@@ -59,10 +69,9 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	fmt.Println()
 	fmt.Println(strings.Join(full, "  "))
 	fmt.Print("$ " + prefix)
-	fmt.Print("1111111111111111111111111111111")
 	c.state.isLastBellAmbiguous = false
 
-	return [][]rune{}, 0
+	return nil, 0
 }
 
 func main() {
