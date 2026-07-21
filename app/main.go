@@ -53,7 +53,6 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		return matches, length
 	}
 
-	// find longest common prefix
 	lcp := matches[0]
 	for _, m := range matches[1:] {
 		i := 0
@@ -63,9 +62,9 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		lcp = lcp[:i]
 	}
 
-	prefix := string(line)
-	// can we complete further?
-	if len(prefix)+len(lcp) > len(line) {
+	fullLcp := append(line, lcp...)
+
+	if len(fullLcp) > len(line) {
 		c.state.isLastBellAmbiguous = false
 		return [][]rune{lcp}, len(lcp)
 	}
@@ -76,6 +75,7 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		return nil, 0
 	}
 
+	prefix := string(line)
 	full := make([]string, len(matches))
 	for i, m := range matches {
 		full[i] = prefix + string(m)
