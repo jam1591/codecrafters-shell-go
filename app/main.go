@@ -66,11 +66,22 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	}
 	sort.Strings(full)
 
+	result := make([][]string, len(full))
+	for i, s := range full {
+		result[i] = strings.Split(s, "_")
+	}
+
 	fmt.Println()
 	fmt.Println(strings.Join(full, "  "))
-	fmt.Print("$ " + prefix)
 	c.state.isLastBellAmbiguous = false
 
+	for _, s := range result {
+		if strings.Join(s[:len(s)-1], "_") == string(line) {
+			return [][]rune{[]rune(strings.Join(s, "_"))}, 1
+		}
+	}
+
+	fmt.Print("$ " + prefix)
 	return nil, 0
 }
 
