@@ -63,10 +63,9 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		lcp = lcp[:i]
 	}
 
-	fmt.Println("lcp is", string(lcp))
-
+	prefix := string(line)
 	// can we complete further?
-	if len(lcp) > len(line) {
+	if len(prefix)+len(lcp) > len(line) {
 		c.state.isLastBellAmbiguous = false
 		return [][]rune{lcp}, len(lcp)
 	}
@@ -77,7 +76,6 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		return nil, 0
 	}
 
-	prefix := string(line)
 	full := make([]string, len(matches))
 	for i, m := range matches {
 		full[i] = prefix + string(m)
