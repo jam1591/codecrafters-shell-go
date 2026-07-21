@@ -63,8 +63,6 @@ func (c *Completer) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		lcp = lcp[:i]
 	}
 
-	fmt.Println("lcp is", string(lcp))
-
 	// can we complete further?
 	if len(lcp) > len(line) {
 		c.state.isLastBellAmbiguous = false
